@@ -133,7 +133,19 @@ rules:
   - create
   - delete
 - apiGroups:
-  - snapshot.storage.k8s
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - snapshot.storage.k8s.io
   resources:
   - volumesnapshotcontents
   - volumesnapshots
@@ -159,7 +171,15 @@ rules:
   - list
   - get
 - apiGroups:
-  - coordination.k89s.io
+  - csi.storage.k8s.io
+  resources:
+  - csinodeinfos
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
   resources:
   - leases
   verbs:
@@ -169,5 +189,13 @@ rules:
   - delete
   - update
   - create
+- apiGroups:
+  - security.openshift.io
+  resourceNames:
+  - privileged
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use
   
 #+kubebuilder:scaffold:rules

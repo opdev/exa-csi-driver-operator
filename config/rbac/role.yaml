@@ -119,7 +119,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - presistenvoleclaims/status
+  - persistenvoleclaims/status
   verbs:
   - update
   - patch

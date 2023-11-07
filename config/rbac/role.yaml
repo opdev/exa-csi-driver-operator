@@ -193,7 +193,6 @@ rules:
   - security.openshift.io
   resourceNames:
   - privileged
-  - anyuid
   resources:
   - securitycontextconstraints
   verbs:

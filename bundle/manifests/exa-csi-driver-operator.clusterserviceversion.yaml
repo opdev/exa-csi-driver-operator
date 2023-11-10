@@ -34,9 +34,11 @@ metadata:
         }
       ]
     capabilities: Basic Install
+    categories: Storage
     createdAt: "2023-11-09T16:09:21Z"
     operators.operatorframework.io/builder: operator-sdk-v1.28.1
     operators.operatorframework.io/project_layout: helm.sdk.operatorframework.io/v1
+    repository: https://github.com/DDNStorage/exa-csi-driver
   name: exa-csi-driver-operator.v0.0.1
   namespace: placeholder
 spec:
@@ -46,8 +48,97 @@ spec:
     - kind: ExaCsi
       name: exacsis.charts.my.domain
       version: v1alpha1
-  description: TODO - edit this
-  displayName: Exa CSI Driver
+  description: |
+    A Container Storage Interface (CSI) Driver for DDN EXAScaler filesystems. This operator eases the installation
+    and management of the EXAScaler CSI Driver in an OpenShift or other Operator Lifecycle Manager enabled cluster.
+
+    ## Prerequisites
+    The Exa CSI Driver requires installing the lustre kernel module onto your cluster nodes. OpenShifts supports installing kernel modules using the Kernel Module Manager Operator (KMM).
+
+    KMM uses a ModuleLoader image to load kernel modules onto cluster nodes. You can build a ModuleLoader image outside your cluster or you can create a ConfigMap containing a Dockerfile which KMM will use to build and store the image on your cluster. Please see the [documentation for creating ModuleLoader images here](https://openshift-kmm.netlify.app/documentation/module_loader_image/) for more information.
+    
+    You must also make sure to install the proper lustre version. To match the lustre package versions to your OpenShift release, please cross-reference [the Lustre version support matrix](https://wiki.whamcloud.com/display/PUB/Lustre+Support+Matrix)  with the [RHEL version utilized by your OpenShift release](https://access.redhat.com/articles/6907891). Once you know the version of lustre that matches your OpenShift cluster, you will want to note the URLs of the `lustre-client` and `kmod-lustre-client` packages hosted [here](https://downloads.whamcloud.com/public/lustre). You can export these values in a shell session to simplify the following instructions. For example, if we want lustre 2.15.3 for OpenShift 4.13:
+    ```bash
+    export LUSTRE_PACKAGE=https://downloads.whamcloud.com/public/lustre/latest-release/el9.2/client/RPMS/x86_64/lustre-client-2.15.3-1.el9.x86_64.rpm
+    export KMOD_PACKAGE=https://downloads.whamcloud.com/public/lustre/latest-release/el9.2/client/RPMS/x86_64/kmod-lustre-client-2.15.3-1.el9.x86_64.rpm
+    ```
+
+    Building images on your cluster will also require [properly configured Red Hat entitlements on your cluster](https://examples.openshift.pub/cluster-configuration/full-cluster-entitlement/).
+    
+    ### Lustre Kernel Module Quick Setup
+    - Install the Kernel Module Management operator through the OperatorHub if it is not already installed.
+    - Retrieve a sample ConfigMap for building the ModuleLoader image and substitute the URLs of the `lustre-client` and `kmod-lustre-client` packages that match your OpenShift release into the sample ConfigMap:
+      ```bash
+      wget sample-lustre-dockerfile-configmap.yaml
+      sed -i "s|LUSTRE_PACKAGE|$LUSTRE_PACKAGE|g" sample-lustre-dockerfile-configmap.yaml
+      sed -i "s|KMOD_PACKAGE|$KMOD_PACKAGE|g" sample-lustre-dockerfile-configmap.yaml
+      ```
+
+    - Add the ConfigMap to your cluster in the `openshift-kmm` default namespace: 
+    ```bash
+    oc apply -n openshift-kmm -f sample-lustre-dockerfile-configmap.yaml
+    ```
+
+    - Retrieve a sample DaemonSet that runs necessary network configuration for the kernel modules. If you know a particular interface configuration that you require, substitute that into the `lnetctl net add` line of the file (our example uses the default `br-ex` interface used by the OVN-Kubernetes network provider):
+    ```bash
+    wget lnet-configuration-ds.yaml
+    # if you want to change the network interface used:
+    sed -i "s/br-ex/my_interface/g" lnet-configuration-ds.yaml
+    ```
+
+    -  Retrieve the `lnet` Module Custom Resource and apply it and the DaemonSet to your cluster in the `openshift-kmm` namespace:
+    ```bash
+    wget lnet-mod.yaml
+    oc apply -n openshift-kmm -f lnet-mod.yaml -f lnet-configuration-ds.yaml
+    ```
+
+    - Adding the `lnet` Module CR to your cluster will trigger a build of the image in the previously applied ConfigMap. You can monitor the status of the build in the OpenShift Console or on the command line:
+    ```bash
+    oc get -n openshift-kmm builds -w
+    ```
+
+    - Shortly after the build completes, you should see the status of the child pods of your Module and DaemonSet change to "Running":
+    ```bash
+    oc get -n openshift-kmm pods
+
+    # Output
+    NAME                                               READY   STATUS    RESTARTS      AGE
+    kmm-operator-controller-manager-6bfc986b4b-22xv9   2/2     Running   4 (10h ago)   8d
+    lnet-452sc-85rs4                                   1/1     Running   0             57m
+    lnet-configuration-c6d6w                           1/1     Running   0             57m
+    ```
+
+    - Retrieve and apply the `lustre` Module CR to your cluster:
+    ```bash
+    wget lustre-mod.yaml
+    oc apply -n openshift-kmm -f lustre-mod.yaml
+    ```
+
+    - To verify the modules are loaded and the configuration is set correctly on any particular node, you can open a debug session using your ModuleLoader image:
+    ```bash
+    oc debug node/my-node
+
+    # Once in the debug pod session
+    lsmod | grep lustre # Should show the lustre kernel module is loaded
+
+    lnetctl net show # Should show a tcp interface configured on your interface, br-ex by default
+
+    # Example output:
+    net:
+        - net type: lo
+          local NI(s):
+            - nid: 0@lo
+              status: up
+        - net type: tcp
+          local NI(s):
+            - nid: 10.0.14.194@tcp
+              status: up
+              interfaces:
+                  0: br-ex
+
+    ```
+
+  displayName: EXAScaler CSI File Driver
   icon:
   - base64data: ""
     mediatype: ""
@@ -395,15 +486,20 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-  - TODO - edit this
+  - CSI
+  - Lustre
+  - EXAScaler
+  - HPC
+  - AI
+  - High-Performance Computing
   links:
-  - name: Exa Csi Driver Operator
-    url: https://exa-csi-driver-operator.domain
+  - name: DDN EXAScaler Filesystem
+    url: https://www.ddn.com/products/lustre-file-system-exascaler/
   maintainers:
   - email: dhoover@redhat.com
     name: dhoover
   maturity: alpha
   provider:
-    name: TODO - edit this
-    url: TODO - edit this
+    name: DataDirect Networks
+    url: https://www.ddn.com
   version: 0.0.1

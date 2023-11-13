@@ -496,8 +496,10 @@ spec:
   - name: DDN EXAScaler Filesystem
     url: https://www.ddn.com/products/lustre-file-system-exascaler/
   maintainers:
-  - email: dhoover@redhat.com
-    name: dhoover
+  - email: akhodos@tintri.com
+    name: Alexey Khodos
+  - email: rrethinam@tintri.com
+    name: Ranjith Rethinam
   maturity: alpha
   provider:
     name: DataDirect Networks

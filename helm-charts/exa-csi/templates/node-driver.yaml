@@ -6,37 +6,6 @@
 # Runs driver node server (driver + registrar) on each node
 #
 
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: exascaler-csi-node-service-account
-  namespace: {{ .Values.namespace }}
----
-
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: exascaler-csi-node-cluster-role
-rules:
-  - apiGroups: ['']
-    resources: ['events']
-    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch']
----
-
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: exascaler-csi-node-cluster-role-binding
-subjects:
-  - kind: ServiceAccount
-    name: exascaler-csi-node-service-account
-    namespace: {{ .Values.namespace }}
-roleRef:
-  kind: ClusterRole
-  name: exascaler-csi-node-cluster-role
-  apiGroup: rbac.authorization.k8s.io
----
-
 # exascaler Node Server as a daemon
 
 kind: DaemonSet

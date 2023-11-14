@@ -6,7 +6,7 @@ namespace: exa-csi-driver-operator-system
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: exa-csi-driver-operator-
+namePrefix: exascaler-csi-
 
 # Labels to add to all resources and selectors.
 #labels:

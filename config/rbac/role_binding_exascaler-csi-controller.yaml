@@ -6,6 +6,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: exascaler-csi-controller-service-account
+    namespace: placeholder
 roleRef:
   kind: ClusterRole
   name: exascaler-csi-controller-cluster-role
@@ -15,10 +16,11 @@ roleRef:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-resizer-binding
+  name: csi-resizer-bindinga
 subjects:
   - kind: ServiceAccount
     name: exascaler-csi-controller-service-account
+    namespace: placeholder
 roleRef:
   kind: ClusterRole
   name: csi-resizer-role

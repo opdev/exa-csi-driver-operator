@@ -5,7 +5,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: exascaler-csi-node-service-account
-    namespace: {{ .Values.namespace }}
+    namespace: placeholder
 roleRef:
   kind: ClusterRole
   name: exascaler-csi-node-cluster-role

@@ -23,3 +23,5 @@ resources:
 - role_exascaler-csi-node.yaml
 - role_binding_exascaler-csi-controller.yaml
 - role_binding_exascaler-csi-node.yaml
+- priviledged-scc-role.yaml
+- priviledged-scc-role-binding.yaml
